@@ -1,33 +1,79 @@
 import express from "express";
 import bodyParser from "body-parser";
+import "dotenv/config";
+import pg from "pg";
 
 const app = express();
 const port = 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
+// PROD
+// const db = new pg.Client(process.env.DATABASE_URL);
+const db = new pg.Client({
+  user: process.env.USER,
+  host: process.env.HOST,
+  database: process.env.DATABASE,
+  password: process.env.PASSWORD,
+  port: process.env.port,
+});
+
+db.connect();
 
 let items = [
   { id: 1, title: "Buy milk" },
-  { id: 2, title: "Finish homework" },
+  { id: 2, title: "Buy cat food" },
 ];
 
-app.get("/", (req, res) => {
-  res.render("index.ejs", {
-    listTitle: "Today",
-    listItems: items,
-  });
+app.get("/", async (req, res) => {
+  try {
+    const results = await db.query("SELECT * FROM items");
+    items = results.rows;
+    console.log(items);
+    res.render("index.ejs", {
+      listTitle: "Today",
+      listItems: items,
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
-app.post("/add", (req, res) => {
+app.post("/add", async (req, res) => {
   const item = req.body.newItem;
-  items.push({ title: item });
+  if (req.body.newItem !== "") {
+    try {
+      await db.query("INSERT INTO items (title) VALUES ($1)", [item]);
+    } catch (err) {
+      console.error(err);
+    }
+  }
   res.redirect("/");
 });
 
-app.post("/edit", (req, res) => {});
+app.post("/edit", async (req, res) => {
+  var editedTitle = req.body.updatedItemTitle;
+  var idOfEdited = req.body.updatedItemId;
+  try {
+    await db.query("UPDATE items SET title=$1 WHERE id=$2", [
+      editedTitle,
+      idOfEdited,
+    ]);
+  } catch (err) {
+    console.error(err);
+  }
+  res.redirect("/");
+});
 
-app.post("/delete", (req, res) => {});
+app.post("/delete", async (req, res) => {
+  var idOfDeleting = req.body.deleteItemId;
+  try {
+    await db.query("DELETE FROM items WHERE id=$1", [idOfDeleting]);
+  } catch (err) {
+    console.error(err);
+  }
+  res.redirect("/");
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
