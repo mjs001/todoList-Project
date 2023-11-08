@@ -8,16 +8,8 @@ const port = 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
-// PROD
-// const db = new pg.Client(process.env.DATABASE_URL);
-const db = new pg.Client({
-  user: process.env.USER,
-  host: process.env.HOST,
-  database: process.env.DATABASE,
-  password: process.env.PASSWORD,
-  port: process.env.port,
-});
 
+const db = new pg.Client(process.env.DATABASE_URL);
 db.connect();
 
 let items = [
@@ -29,7 +21,6 @@ app.get("/", async (req, res) => {
   try {
     const results = await db.query("SELECT * FROM items");
     items = results.rows;
-    console.log(items);
     res.render("index.ejs", {
       listTitle: "Today",
       listItems: items,
@@ -59,10 +50,10 @@ app.post("/edit", async (req, res) => {
       editedTitle,
       idOfEdited,
     ]);
+    res.redirect("/");
   } catch (err) {
     console.error(err);
   }
-  res.redirect("/");
 });
 
 app.post("/delete", async (req, res) => {

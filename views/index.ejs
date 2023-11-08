@@ -5,6 +5,7 @@
 </div>
 <div class="box">
   <% if (locals.listItems) { %> <% for(let item of listItems){%>
+
   <div class="item">
     <form action="/delete" method="post">
       <input
@@ -27,6 +28,7 @@
         autocomplete="off"
         autofocus="true"
         hidden="true"
+        placeholder="<%= locals.error ? error : '' %>"
       />
       <button id="done<%=item.id%>" class="edit" type="submit" hidden>
         <img
@@ -65,9 +67,10 @@
       value="<%=listTitle %>"
     ></button>
   </form>
-  <% } %>
+  <% }else { %>
+  <img class="spinner" src="/assets/icons/tail-spin.svg" />
+  <% }%>
 </div>
-
 <script>
   function handler(id) {
     document.getElementById("title" + id).setAttribute("hidden", true);
